@@ -1,9 +1,5 @@
 package main
 
-func main() {
-
-}
-
 // 判断在指定位置填入指定数字是否合法
 func isValid(board [9][9]int, row int, col int, num int) bool {
 	// 检查同一行是否有重复
