@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"learn/MergeSort"
+	"learn/Merge_Sort"
 )
 
 func main() {
-	arr := MergeSort.GenerateRandArr()
+	arr := Merge_Sort.GenerateRandArr()
 	fmt.Print("Original:", arr)
-	sorted := MergeSort.MergeSort(arr)
+	sorted := Merge_Sort.MergeSort(arr)
 	fmt.Print("Sorted array:", sorted)
 
 }
