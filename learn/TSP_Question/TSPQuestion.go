@@ -9,10 +9,10 @@ import (
 const INF = 0x3f3f3f3f
 
 type State struct {
-	curPos  int
-	count   int
-	path    []int
-	visited [][]bool
+	curPos  int      //当前访问城市
+	count   int      //记录到目前为止已经访问过的城市数量。
+	path    []int    //存储路径的切片
+	visited [][]bool //标记每个城市是否已被访问过
 }
 
 func Run() {
@@ -53,11 +53,12 @@ func NumberOfCities() {
 
 func TspBfs(cityNum int, distance [][]int) ([]int, int) {
 	visited := make([][]bool, cityNum) // 记录每个城市是否已访问过
-	path := make([]int, cityNum+1)     // 记录路径
-	bestPath := make([]int, cityNum+1) // 记录最优路径
-	minLength := -1                    // 记录最短路径
+	path := make([]int, cityNum+1)     // 初始化路径切片 path，其中保存起点和终点坐标
+	bestPath := make([]int, cityNum+1) // 初始化最短路径切片 bestPath，其中保存起点和终点坐标
+	minLength := -1                    // 初始化最短路径长度 minLength 为 -1
 	queue := list.New()                // 使用队列存储状态
-	queue.PushBack(State{curPos: 0, count: 1, path: path})
+
+	queue.PushBack(State{curPos: 0, count: 1, path: path}) // 将起点放入队列
 
 	for queue.Len() > 0 {
 		state := queue.Remove(queue.Front()).(State) // 取出队列中的状态
