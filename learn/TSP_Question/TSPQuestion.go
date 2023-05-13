@@ -2,76 +2,146 @@ package TSP_Question
 
 import (
 	"fmt"
+	"github.com/gogf/gf/v2/container/garray"
 	"math/rand"
 )
 
-const INF = 0x3f3f3f3f
-
-type State struct {
-	curPos  int      //当前访问城市
-	count   int      //记录到目前为止已经访问过的城市数量。
-	path    []int    //存储路径的切片
-	visited [][]bool //标记每个城市是否已被访问过
+type branch struct {
+	Length int    // 表示该分支所代表的路径总长度
+	Path   []int  // 表示该分支所代表的经过的城市序列
+	visit  []bool // 记录每个城市是否被访问过的布尔数组
 }
 
-func Run() {
-	NumberOfCities()
-}
-
-func NumberOfCities() {
-	var cityNum int
-	fmt.Print("请输入城市数量：")
-	_, err := fmt.Scan(&cityNum)
+func Test() (err error) {
+	cityNum, err := NumOfCity()
 	if err != nil {
-		panic(err)
-	}
-
-	// 随机生成城市之间道路长度
-	distance := make([][]int, cityNum)
-	for i := 0; i < cityNum; i++ {
-		distance[i] = make([]int, cityNum)
-		for j := 0; j < cityNum; j++ {
-			if i == j {
-				distance[i][j] = 0
-			} else {
-				distance[i][j] = rand.Intn(20) + 1
-			}
-		}
-	}
-
-	visited := make([]bool, cityNum)   // 记录每个城市是否已访问过
-	path := make([]int, cityNum+1)     // 记录路径
-	bestPath := make([]int, cityNum+1) // 记录最优路径
-	minLength := -1                    // 记录最短路径
-
-	visited[0] = true // 从第一个城市开始遍历
-	TspDfs(cityNum, distance, visited, 0, 1, path, &minLength, bestPath)
-
-	// 输出结果
-	fmt.Println("各城市之间的道路长度：")
-	for _, row := range distance {
-		fmt.Println(row)
-	}
-	fmt.Printf("旅行家所走的路径（城市编号序列）：%v\n", bestPath)
-	fmt.Printf("程序求出的路径长度：%d\n", minLength)
-
-}
-
-func TspDfs(cityNum int, distance [][]int, visited []bool, curPos int, count int, path []int, minLength *int, bestPath []int) {
-	if count == cityNum { // 如果已经遍历完所有城市
-		if distance[curPos][0] < INF && (distance[curPos][0]+path[count-1] < *minLength || *minLength == -1) { // 更新最短路径
-			*minLength = distance[curPos][0] + path[count-1]
-			copy(bestPath, path)
-			bestPath[cityNum] = 0 // 最后回到起点
-		}
 		return
 	}
-	for i := 0; i < cityNum; i++ { // 遍历每个未访问过的城市
-		if !visited[i] && distance[curPos][i] != INF { // 如果该城市未访问过且与当前城市有直接连接
-			path[count] = distance[curPos][i]                                         // 记录走过的距离
-			visited[i] = true                                                         // 标记为已访问
-			TspDfs(cityNum, distance, visited, i, count+1, path, minLength, bestPath) // 继续搜索
-			visited[i] = false                                                        // 回溯，将状态恢复为未访问
+	// 随机生成城市之间的距离矩阵
+	cityDist := IntercityDistance(cityNum)
+	// 输出城市距离矩阵
+	printCityMap(cityDist)
+	// 随机选择一个起始城市
+	startCity := rand.Intn(cityNum)
+	path, length := TspBfs(cityDist, startCity)
+	fmt.Println("旅行家走的路径: ")
+	printPath(path, length)
+	return
+}
+
+// NumOfCity 随机生成城市之间的距离矩阵
+func NumOfCity() (cityNum int, err error) {
+	fmt.Println("请输入城市数目")
+	_, err = fmt.Scan(&cityNum)
+	return
+}
+
+func IntercityDistance(cityNum int) (cityMap [][]int) {
+	cityMap = make([][]int, cityNum)
+	for i := 0; i < cityNum; i++ {
+		cityMap[i] = make([]int, cityNum)
+		for j := 0; j < cityNum; j++ {
+			if i == j {
+				continue
+			}
+			cityMap[i][j] = rand.Intn(20) + 1
 		}
 	}
+	return
+}
+
+func printCityMap(cityMap [][]int) {
+	cityNum := len(cityMap)
+	for i := 0; i < cityNum; i++ {
+		for j := 0; j < cityNum; j++ {
+			fmt.Printf("%2d ", cityMap[i][j])
+		}
+		fmt.Println()
+	}
+}
+
+func printPath(path []int, length int) {
+	pathLen := len(path)
+	for i := 0; i < pathLen; i++ {
+		fmt.Print(path[i] + 1)
+		if i != pathLen-1 {
+			fmt.Print("-")
+		}
+	}
+	fmt.Println()
+	fmt.Println(length)
+}
+
+func TspBfs(cityMap [][]int, startCity int) (path []int, length int) {
+	cityNum := len(cityMap)
+	// 创建一个优先队列用于存储搜索树中的分支
+	queue := garray.NewSortedArray(func(a, b any) int {
+		aLength := a.(*branch)
+		bLength := b.(*branch)
+		// 根据总长度比较两个分支
+		if aLength.Length < bLength.Length {
+			return -1
+		}
+		// 如果两个分支长度相等，则根据路径长度比较它们
+		if aLength.Length == bLength.Length {
+			if len(aLength.Path) > len(bLength.Path) {
+				return -1
+			}
+			if len(aLength.Path) == len(bLength.Path) {
+				return 0
+			}
+		}
+		return 1
+	})
+	// 创建一个初始的分支，包含起始城市，并将其添加到优先队列中
+	startB := &branch{
+		Length: 0,
+		Path:   []int{startCity},
+		visit:  make([]bool, cityNum, cityNum),
+	}
+	startB.visit[startCity] = true
+	queue.Add(startB)
+	currLength := 0
+	currPathMinLength := 0
+	// 循环直到找到TSP最短路径或搜索所有可能的路径
+	for queue.Len() > 0 {
+		bTemp, found := queue.PopLeft()
+		if !found {
+			return
+		}
+		b := bTemp.(*branch)
+		// 根据弹出的分支更新当前最长的路径和当前最短路径长度
+		if b.Length > currLength {
+			currLength = b.Length
+			currPathMinLength = len(b.Path)
+		} else if len(b.Path) < currPathMinLength {
+			continue
+		}
+		switch len(b.Path) {
+		case cityNum:
+			b.Length += cityMap[b.Path[len(b.Path)-1]][startCity]
+			b.Path = append(b.Path, startCity)
+			queue.Add(b)
+			continue
+		case cityNum + 1:
+			path = b.Path
+			length = b.Length
+			return
+		}
+		for i := 0; i < cityNum; i++ {
+			if b.visit[i] || cityMap[b.Path[len(b.Path)-1]][i] == 0 {
+				continue
+			}
+			nextPath := append([]int{}, b.Path...)
+			nextVisitPlace := append([]bool{}, b.visit...)
+			nextPath = append(nextPath, i)
+			nextVisitPlace[i] = true
+			queue.Add(&branch{
+				Length: b.Length + cityMap[b.Path[len(b.Path)-1]][i],
+				Path:   nextPath,
+				visit:  nextVisitPlace,
+			})
+		}
+	}
+	return
 }
