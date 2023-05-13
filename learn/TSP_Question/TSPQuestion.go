@@ -20,7 +20,7 @@ func Test() (err error) {
 	// 随机生成城市之间的距离矩阵
 	cityDist := IntercityDistance(cityNum)
 	// 输出城市距离矩阵
-	printCityMap(cityDist)
+	CityDistance(cityDist)
 	// 随机选择一个起始城市
 	startCity := rand.Intn(cityNum)
 	path, length := TspBfs(cityDist, startCity)
@@ -50,7 +50,7 @@ func IntercityDistance(cityNum int) (cityMap [][]int) {
 	return
 }
 
-func printCityMap(cityMap [][]int) {
+func CityDistance(cityMap [][]int) {
 	cityNum := len(cityMap)
 	for i := 0; i < cityNum; i++ {
 		for j := 0; j < cityNum; j++ {
