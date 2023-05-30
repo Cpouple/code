@@ -62,7 +62,9 @@ func longestCommonSubsequence(x, y string) (int, string) {
 		for j, c2 := range y {
 			if c1 == c2 {
 				dp[i+1][j+1] = dp[i][j] + 1
-				sub[dp[i+1][j+1]-1] = c1
+				if dp[i+1][j+1] > dp[i][j+1] && dp[i+1][j+1] > dp[i+1][j] {
+					sub[dp[i+1][j+1]-1] = c1
+				}
 			} else {
 				dp[i+1][j+1] = max(dp[i][j+1], dp[i+1][j])
 			}
