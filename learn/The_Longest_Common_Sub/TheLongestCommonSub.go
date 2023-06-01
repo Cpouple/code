@@ -52,26 +52,31 @@ func randString(length int) string {
 }
 func longestCommonSubsequence(x, y string) (int, string) {
 	m, n := len(x), len(y)
-	sub := make([]rune, m, m) // 初始化一个空字符数组用于存储最长公共子序列
-	dp := make([][]int, m+1)  // 初始化一个二维数组存储动态规划的结果
+	sub := make([][][]rune, m+1) // 初始化一个空字符数组用于存储最长公共子序列
+	dp := make([][]int, m+1)     // 初始化一个二维数组存储动态规划的结果
 	for i := range dp {
 		dp[i] = make([]int, n+1)
+		sub[i] = make([][]rune, n+1)
 	}
 	// 使用动态规划找到这两个字符串的最长公共子序列及其长度
 	for i, c1 := range x {
 		for j, c2 := range y {
 			if c1 == c2 {
 				dp[i+1][j+1] = dp[i][j] + 1
-				if dp[i+1][j+1] > dp[i][j+1] && dp[i+1][j+1] > dp[i+1][j] {
-					sub[dp[i+1][j+1]-1] = c1
-				}
+				sub[i+1][j+1] = append(append([]rune{}, sub[i][j]...), c1)
 			} else {
-				dp[i+1][j+1] = max(dp[i][j+1], dp[i+1][j])
+				if dp[i][j+1] > dp[i+1][j] {
+					dp[i+1][j+1] = dp[i][j+1]
+					sub[i+1][j+1] = sub[i][j+1]
+				} else {
+					dp[i+1][j+1] = dp[i+1][j]
+					sub[i+1][j+1] = sub[i+1][j]
+				}
 			}
 		}
 	}
 	// 将最长公共子序列从字符数组转换为字符串
-	return dp[m][n], string(sub)
+	return dp[m][n], string(sub[m][n])
 }
 
 func max(a, b int) int {
